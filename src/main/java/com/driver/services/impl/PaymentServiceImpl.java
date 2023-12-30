@@ -1,6 +1,9 @@
 package com.driver.services.impl;
 
+import com.driver.model.Payment;
 import com.driver.model.PaymentMode;
+import com.driver.model.Reservation;
+import com.driver.model.Spot;
 import com.driver.repository.PaymentRepository;
 import com.driver.repository.ReservationRepository;
 import com.driver.services.PaymentService;
@@ -16,6 +19,36 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public Payment pay(Integer reservationId, int amountSent, String mode) throws Exception {
+        Reservation reservation=reservationRepository2.findById(reservationId).get();
+        Spot spot1=reservation.getSpot();
+        int totalAmount=reservation.getNumberOfHours()*spot1.getPricePerHour();
+        if(totalAmount>amountSent){
+            throw new Exception("Insufficient Amount");
+        }
 
+
+        boolean check=false;
+        if(mode.equalsIgnoreCase("cash") || mode.equalsIgnoreCase("card") || mode.equalsIgnoreCase("upi")){
+            check = true;
+        }
+        if(!check){
+            throw new Exception("Payment mode not detected");
+        }
+        Payment payment=new Payment();
+        if(mode.equalsIgnoreCase("cash")){
+            payment.setPaymentMode(PaymentMode.CASH);
+        }
+        else if(mode.equalsIgnoreCase("card")){
+            payment.setPaymentMode(PaymentMode.CARD);
+        }
+        else if(mode.equalsIgnoreCase("upi")){
+            payment.setPaymentMode(PaymentMode.UPI);
+        }
+        payment.setPaymentCompleted(true);
+        reservation.setPayment(payment);
+//        payment.setReservation(reservation);
+//        paymentRepository2.save(payment);
+        reservationRepository2.save(reservation);
+        return payment;
     }
 }
